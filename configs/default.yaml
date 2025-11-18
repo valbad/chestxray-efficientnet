@@ -1,0 +1,34 @@
+model:
+  name: efficientnet_b4
+  pretrained: true
+  num_classes: 3
+
+data:
+  # Folders automatically created if missing
+  data_dir: "data"
+
+  # CSV with (path,label)
+  train_csv: "data/train.csv"
+
+  # Dataset preparation parameters
+  img_size: 380
+  batch_size: 16
+  num_workers: 2
+  val_size: 0.15
+  random_state: 42
+
+  # Dropbox URLs (used only if train/ or test/ folders are empty)
+  dropbox_train_tar: "https://www.dropbox.com/s/feaakvusdvkep3n/train.tar"
+  dropbox_train_csv: "https://www.dropbox.com/s/9kebfecemhfkj7k/train.csv"
+  dropbox_test_tar:  "https://www.dropbox.com/s/20d8b9z8znc2lmp/testPublic.tar"
+  suffix: "?dl=1"
+
+training:
+  epochs: 20
+  lr: 1e-4
+  weight_decay: 1e-5
+  early_stopping_patience: 5
+  device: "cuda"
+
+paths:
+  output_dir: "outputs"
