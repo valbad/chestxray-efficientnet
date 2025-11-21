@@ -92,3 +92,39 @@ def build_transforms(img_size=380):
         "train": train_transform,
         "val": val_transform,
     }
+
+def build_tta_transforms(img_size):
+
+    base = [
+        transforms.Lambda(custom_preprocessing_2),          # crop + CLAHE
+        transforms.Resize((img_size, img_size)),
+        transforms.Grayscale(num_output_channels=1),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5]),
+    ]
+
+    return [
+
+        # 1) Vue originale (très important)
+        transforms.Compose(base),
+
+        # 2) Très léger jitter photométrique (safe)
+        transforms.Compose([
+            transforms.Lambda(custom_preprocessing_2),
+            transforms.Resize((img_size, img_size)),
+            transforms.ColorJitter(brightness=0.05, contrast=0.05),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ]),
+
+        # 3) Légère augmentation : sharpen / blur
+        transforms.Compose([
+            transforms.Lambda(custom_preprocessing_2),
+            transforms.Resize((img_size, img_size)),
+            transforms.GaussianBlur(kernel_size=3, sigma=0.5),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ]),
+    ]

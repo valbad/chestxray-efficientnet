@@ -4,6 +4,7 @@ import os
 import glob
 import pandas as pd
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 
@@ -68,6 +69,53 @@ class ChestXRayTestDataset(Dataset):
 
         return image, filename
 
+class TTADataset(Dataset):
+    def __init__(self, dataframe, root_dir, transforms_list):
+        self.df = dataframe.reset_index(drop=True)
+        self.root_dir = root_dir
+        self.transforms_list = transforms_list
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.root_dir, self.df.loc[idx, "path"])
+        img = Image.open(img_path).convert("RGB")
+        augmented = [t(img.convert("L")) for t in self.transforms_list]
+        label = int(self.df.loc[idx, "label"])
+        return torch.stack(augmented), label
+
+class TTATestDataset(Dataset):
+    """
+    TTA dataset for test images (no labels).
+    Returns:
+       (stack_of_augmentations, filename)
+    """
+
+    def __init__(self, image_dir, transforms_list):
+        self.image_dir = image_dir
+        self.transforms_list = transforms_list
+
+        exts = ("*.png", "*.jpg", "*.jpeg")
+        files = []
+        for ext in exts:
+            files.extend(glob.glob(os.path.join(image_dir, ext)))
+
+        self.paths = sorted(files)
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, idx):
+        img_path = self.paths[idx]
+        filename = os.path.basename(img_path)
+
+        img = Image.open(img_path).convert("RGB")
+
+        # apply the TTA transforms
+        augmented = [t(img.convert("L")) for t in self.transforms_list]
+
+        return torch.stack(augmented), filename
 
 def prepare_datasets(cfg_data):
     """
@@ -76,27 +124,35 @@ def prepare_datasets(cfg_data):
       2) Télécharge depuis Dropbox si les dossiers sont vides
       3) Vérifie que train.csv et les images sont cohérents
       4) Split train/val
-      5) Crée train, val, test datasets
-
-    Args:
-        cfg_data (dict): section "data" du default.yaml
+      5) Crée train, val, test datasets + test_df
 
     Returns:
-        train_df, val_df, train_dataset, val_dataset, test_dataset
+        train_df, val_df, test_df,
+        train_dataset, val_dataset, test_dataset
     """
 
-    data_dir   = cfg_data["data_dir"]   # ex: "data"
-    train_dir = cfg_data["train_dir"]
-    test_dir   = cfg_data["test_dir"]   # ex: "data/test"
-    csv_path   = cfg_data["train_csv"]  # ex: "data/train.csv"
+    import os
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
 
-    # 1–3 : gestion des dossiers + download si nécessaire
+    data_dir   = cfg_data["data_dir"]
+    train_dir  = cfg_data["train_dir"]
+    test_dir   = cfg_data["test_dir"]
+    csv_path   = cfg_data["train_csv"]
+
+    # -------------------------------
+    # 1–3. Ensure data is present + download if needed
+    # -------------------------------
     ensure_data_dirs(cfg_data)
 
-    # 4 : valider CSV + images de train
+    # -------------------------------
+    # 4. Validate train CSV + images
+    # -------------------------------
     df = validate_dataset_structure(csv_path, train_dir)
 
-    # 4 : train/val split
+    # -------------------------------
+    # 5. Train/Val split (with reset_index)
+    # -------------------------------
     train_df, val_df = train_test_split(
         df,
         test_size=cfg_data["val_size"],
@@ -104,15 +160,36 @@ def prepare_datasets(cfg_data):
         random_state=cfg_data["random_state"],
     )
 
-    # 5 : transformer et créer datasets
+    train_df = train_df.reset_index(drop=True)
+    val_df   = val_df.reset_index(drop=True)
+
+    # -------------------------------
+    # 6. Build transforms
+    # -------------------------------
     transforms = build_transforms(cfg_data["img_size"])
 
+    # -------------------------------
+    # 7. Create train & val datasets
+    # -------------------------------
     train_dataset = ChestXRayDataset(train_df, train_dir, transforms["train"])
     val_dataset   = ChestXRayDataset(val_df,   train_dir, transforms["val"])
 
+    # -------------------------------
+    # 8. Build test_df and test_dataset
+    # -------------------------------
+    test_df = None
     test_dataset = None
-    # On ne force pas l'existence de data/test, mais si des images sont là, on les utilise
+
     if os.path.isdir(test_dir) and len(os.listdir(test_dir)) > 0:
+        # créer dataframe test_df
+        test_files = sorted([
+            f for f in os.listdir(test_dir)
+            if f.lower().endswith((".png", ".jpg", ".jpeg"))
+        ])
+
+        test_df = pd.DataFrame({"path": test_files})
+        test_df = test_df.reset_index(drop=True)
+
         test_dataset = ChestXRayTestDataset(test_dir, transforms["val"])
 
-    return train_df, val_df, train_dataset, val_dataset, test_dataset
+    return train_df, val_df, test_df, train_dataset, val_dataset, test_dataset
