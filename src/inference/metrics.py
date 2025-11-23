@@ -11,6 +11,14 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 def compute_metrics(all_labels, all_preds, all_probs, class_names):
+    """ 
+    Compute metrics: 
+    - Accuracy
+    - macro F1
+    - Classification report 
+    - Confusion matrix
+    - Per-class ROC
+    """
     metrics = {}
 
     # accuracy / f1
@@ -41,6 +49,12 @@ def compute_metrics(all_labels, all_preds, all_probs, class_names):
     return metrics
 
 def plot_metrics(metrics, class_names, save_dir="assets/figures"):
+    """ 
+    Plot: 
+    - Confusion matrix
+    - Roc curves (per-class)
+    - Save plots in save_dir folder
+    """
     os.makedirs(save_dir, exist_ok=True)
 
     # Confusion matrix

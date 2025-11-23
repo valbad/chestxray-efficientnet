@@ -45,43 +45,44 @@ def ensure_data_dirs(cfg_data):
     def folder_empty(path):
         return len(os.listdir(path)) == 0
 
-    # --- TRAIN folder ---
-    if folder_empty(data_dir):
-        print(f"⚠ data directory is empty → downloading all dataset...")
-        tar_path = os.path.join(data_dir, "train.tar")
-        download_from_dropbox(train_tar_url + suffix, tar_path)
-        extract_tar(tar_path, data_dir)
+    # we start by determining if we need to use the hackathon's dropbox urls to download the train/test data.
+    subfolders = [f.lower() for f in os.listdir(data_dir) if len(f.split(".")) == 1]
+    need_download_train, need_download_test = True, True
+    for f in subfolders: 
+      if "train" in f:
+        need_download_train = False
+      if "test" in f:
+        need_download_test = False
 
-        # train.csv
-        download_from_dropbox(csv_url + suffix, csv_path)
-        print("✅ Training data and train.csv downloaded.")
-        if test_tar_url:
-          tar_path = os.path.join(data_dir, "test.tar")
-          download_from_dropbox(test_tar_url + suffix, tar_path)
-          extract_tar(tar_path, data_dir)
-          print("✅ Test data downloaded.")
-        else:
-          print("ℹ No test tar URL provided.")
-    else:
-        # Train not empty → we require train.csv
-        if not os.path.isfile(csv_path):
-            raise FileNotFoundError(
-                f"data/train is not empty but train.csv is missing at {csv_path}. "
-                "Provide a CSV or empty the folder to trigger automatic download."
-            )
-        else:
-            folders = [f for f in os.listdir(data_dir) if len(f.split(".")) == 1]
-            exist_train = False
-            exist_test = False
-            for f in folders: 
-              if "train" in f:
-                exist_train = True
-              if "test" in f: 
-                exist_test = True
-              if exist_train and exist_test: 
-                print("✔ data/train already populated and train.csv found.")
-                print("✔ data/test already populated.")
-                break     
-            if not exist_train and not exist_test: 
-              print("Something went wrong, please refer to README.md and check datastructure")
+    if need_download_train: 
+      # downloading train data
+      print(f"Downaloading train data directory...")
+      tar_path = os.path.join(data_dir, "train.tar")
+      download_from_dropbox(train_tar_url + suffix, tar_path)
+      extract_tar(tar_path,data_dir)
+
+      # downloading train csv
+      download_from_dropbox(csv_url + suffix, csv_path)
+      print("✅ Training data and train.csv downloaded.")
+
+    if need_download_test:
+      if test_tar_url:
+        # downloading test data
+        print(f"Downaloading test data directory...")
+        tar_path = os.path.join(data_dir, "test.tar")
+        download_from_dropbox(test_tar_url + suffix, tar_path)
+        extract_tar(tar_path, data_dir)
+        print("✅ Test data downloaded.")
+      else:
+        print("No test tar URL provided!")
+
+    if not need_download_test and not need_download_train:
+      print("✔ data/train already populated and train.csv found.")
+      print("✔ data/test already populated.")
+
+    if not os.path.isfile(csv_path): #worst case scenario: train data is there but not train csv...
+          raise FileNotFoundError(
+          f"data/train is not empty but train.csv is missing at {csv_path}. "
+          "Provide a CSV or empty the folder to trigger automatic download."
+        )
             

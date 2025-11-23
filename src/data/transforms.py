@@ -105,20 +105,21 @@ def build_tta_transforms(img_size):
 
     return [
 
-        # 1) Vue originale (très important)
+        # 1) Original preprocessing
         transforms.Compose(base),
 
-        # 2) Très léger jitter photométrique (safe)
+        # 2) Very slight intensity jitter + random rotation
         transforms.Compose([
             transforms.Lambda(custom_preprocessing_2),
             transforms.Resize((img_size, img_size)),
             transforms.ColorJitter(brightness=0.05, contrast=0.05),
             transforms.Grayscale(num_output_channels=1),
+            # transforms.RandomRotation(10),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]),
 
-        # 3) Légère augmentation : sharpen / blur
+        # 3) Slight gaussian blur
         transforms.Compose([
             transforms.Lambda(custom_preprocessing_2),
             transforms.Resize((img_size, img_size)),

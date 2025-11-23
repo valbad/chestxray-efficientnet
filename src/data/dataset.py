@@ -117,42 +117,17 @@ class TTATestDataset(Dataset):
 
         return torch.stack(augmented), filename
 
-def prepare_datasets(cfg_data):
-    """
-    Pipeline complet de préparation des datasets:
-      1) S'assure que data/train et data/test existent
-      2) Télécharge depuis Dropbox si les dossiers sont vides
-      3) Vérifie que train.csv et les images sont cohérents
-      4) Split train/val
-      5) Crée train, val, test datasets + test_df
-
-    Returns:
-        train_df, val_df, test_df,
-        train_dataset, val_dataset, test_dataset
-    """
-
+def prepare_dataset_train(cfg_data):
     import os
     import pandas as pd
     from sklearn.model_selection import train_test_split
 
     data_dir   = cfg_data["data_dir"]
     train_dir  = cfg_data["train_dir"]
-    test_dir   = cfg_data["test_dir"]
     csv_path   = cfg_data["train_csv"]
 
-    # -------------------------------
-    # 1–3. Ensure data is present + download if needed
-    # -------------------------------
-    ensure_data_dirs(cfg_data)
-
-    # -------------------------------
-    # 4. Validate train CSV + images
-    # -------------------------------
     df = validate_dataset_structure(csv_path, train_dir)
 
-    # -------------------------------
-    # 5. Train/Val split (with reset_index)
-    # -------------------------------
     train_df, val_df = train_test_split(
         df,
         test_size=cfg_data["val_size"],
@@ -163,25 +138,27 @@ def prepare_datasets(cfg_data):
     train_df = train_df.reset_index(drop=True)
     val_df   = val_df.reset_index(drop=True)
 
-    # -------------------------------
-    # 6. Build transforms
-    # -------------------------------
     transforms = build_transforms(cfg_data["img_size"])
 
-    # -------------------------------
-    # 7. Create train & val datasets
-    # -------------------------------
     train_dataset = ChestXRayDataset(train_df, train_dir, transforms["train"])
     val_dataset   = ChestXRayDataset(val_df,   train_dir, transforms["val"])
 
-    # -------------------------------
-    # 8. Build test_df and test_dataset
-    # -------------------------------
+    return train_df, train_dataset, val_df, val_dataset
+
+def prepare_dataset_test(cfg_data):
+    import os
+    import pandas as pd
+
+    if "test_dir" in cfg_data:
+      test_dir   = cfg_data["test_dir"]
+    else: 
+      test_dir = None
+
     test_df = None
     test_dataset = None
 
     if os.path.isdir(test_dir) and len(os.listdir(test_dir)) > 0:
-        # créer dataframe test_df
+        # create test dataframe
         test_files = sorted([
             f for f in os.listdir(test_dir)
             if f.lower().endswith((".png", ".jpg", ".jpeg"))
@@ -190,6 +167,8 @@ def prepare_datasets(cfg_data):
         test_df = pd.DataFrame({"path": test_files})
         test_df = test_df.reset_index(drop=True)
 
+        transforms = build_transforms(cfg_data["img_size"])
+
         test_dataset = ChestXRayTestDataset(test_dir, transforms["val"])
 
-    return train_df, val_df, test_df, train_dataset, val_dataset, test_dataset
+    return test_df, test_dataset
