@@ -61,6 +61,7 @@ def run_inference():
     # ----- Load model -----
     model = load_model(
         args.model_path,
+        model_type = cfg["model"]["name"],
         num_classes=cfg["model"]["num_classes"],
         device=device
     )

@@ -8,11 +8,11 @@ from torchvision import transforms
 
 from src.data.dataset import ChestXRayDataset
 from src.data.transforms import build_transforms
-from src.models.efficientnet_b4 import create_model
+from src.models.efficientnet import create_model
 
-def load_model(model_path, num_classes=3, device="cuda"):
-    """Load a trained EfficientNet-B4 model."""
-    model = create_model(num_classes=num_classes, pretrained=False)
+def load_model(model_path, model_type = "efficientnet_b4", num_classes=3, device="cuda"):
+    """Load a trained EfficientNet model."""
+    model = create_model(model_type = model_type, num_classes=num_classes, pretrained=False)
     state = load_file(model_path)
     model.load_state_dict(state)
     model = model.to(device)

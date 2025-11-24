@@ -1,6 +1,6 @@
 model:
-  name: efficientnet_b4
-  pretrained: true
+  name: "efficientnet_b4"
+  pretrained: True
   num_classes: 3
 
 data:
@@ -13,7 +13,7 @@ data:
   # Dataset preparation parameters
   img_size: 380
   batch_size: 16
-  num_workers: 2
+  num_workers: 8
   val_size: 0.15
   random_state: 42
 

@@ -11,6 +11,9 @@ if __name__ == "__main__":
                         help="YAML config file")
     parser.add_argument("--train_dir", required=True,
                         help="Directory containing the training data (images + train.csv)")
+    parser.add_argument("--models_dir", type=str,
+                        default="outputs/models/",
+                        help="Where to save model weights")
     parser.add_argument("--history_file", type=str,
                         default="outputs/history/training_history.csv",
                         help="Where to save training metrics")
@@ -29,7 +32,7 @@ if __name__ == "__main__":
         raise ValueError("train_dir is required but missing")
 
     # Run training
-    history = train(cfg)
+    history = train(cfg, models_dir = args.models_dir)
 
     # Save history as CSV
     os.makedirs(os.path.dirname(args.history_file), exist_ok=True)

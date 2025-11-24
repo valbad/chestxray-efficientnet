@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from safetensors.torch import save_file
 from src.data.dataset import prepare_dataset_train
-from src.models.efficientnet_b4 import create_model
+from src.models.efficientnet import create_model
 
 
 class FocalLoss(nn.Module):
@@ -28,7 +28,7 @@ class FocalLoss(nn.Module):
         focal_loss = ((1 - pt) ** self.gamma) * ce_loss
         return focal_loss.mean()
 
-def train(cfg):
+def train(cfg, models_dir = "outputs/models/"):
     cfg_data = cfg["data"] #assuming it contains train_dir entry
     cfg_train = cfg["training"]
     cfg_model = cfg["model"]
@@ -53,7 +53,7 @@ def train(cfg):
     val_loader = DataLoader(
         val_dataset,
         batch_size=cfg["data"]["batch_size"],
-        shuffle=True,
+        shuffle=False,
         num_workers = 8,
         persistent_workers=True
     )
@@ -64,6 +64,7 @@ def train(cfg):
     # Model
     # ---------------------------------------------------------
     model = create_model(
+        model_type = cfg_model["name"],
         num_classes=cfg_model["num_classes"],
         pretrained=cfg_model["pretrained"],
     ).to(device)
@@ -193,14 +194,13 @@ def train(cfg):
     # ============================================================
     #             SAVE BEST + LAST MODELS
     # ============================================================
-    models_dir = os.path.join("outputs", "models")
     os.makedirs(models_dir, exist_ok=True)
 
-    best_model_path = os.path.join(models_dir, "efficientnet_b4_best.safetensors")
+    best_model_path = os.path.join(models_dir, cfg_model["name"]+"_best.safetensors")
     save_file(best_model_state, best_model_path)
     print(f"✅ Best model saved at: {best_model_path}")
 
-    last_model_path = os.path.join(models_dir, "efficientnet_b4_last_epoch.safetensors")
+    last_model_path = os.path.join(models_dir, cfg_model["name"]+"_last_epoch.safetensors")
     save_file(model.state_dict(), last_model_path)
     print(f"📦 Last epoch model saved at: {last_model_path}")
     
