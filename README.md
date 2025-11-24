@@ -141,7 +141,7 @@ Output: ```predictions.csv```
 python -m scripts.run_inference \
     --model_path outputs//models/efficientnet_b4_best.safetensors \
     --config configs/default.yaml \
-    --mode normal \
+    --mode tta \
     --test_dir data/testPublic \
     --save_dir outputs/predictions/normal/
 ```
