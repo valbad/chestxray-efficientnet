@@ -2,6 +2,7 @@
 
 This repository provides a **multi-class chest X-ray classifier** built on **EfficientNet-B4**, trained and evaluated on the dataset from:
 > * **Kun-Hsing Yu. “BMI707 Assignment 2 Q5.” Kaggle (2025).** https://kaggle.com/competitions/2025bmi707-assignment-2-q5
+
 The task consists of predicting **three classes** from frontal chest radiographs.
 The project includes:
 - A complete data-handling pipeline
