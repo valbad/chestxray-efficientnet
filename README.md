@@ -58,7 +58,7 @@ chestxray-efficientnet/
 ## 2. Configuration (default.yaml)
 ```yaml
 model:
-  name: "efficientnet_b2"
+  name: "efficientnet_b4"
   pretrained: True
   num_classes: 3
 
@@ -66,7 +66,7 @@ data:
   data_dir: "data"
   train_csv: "data/train.csv"
 
-  img_size: 260
+  img_size: 380
   batch_size: 32
   num_workers: 8
   val_size: 0.15
@@ -110,9 +110,9 @@ python -m scripts.run_training \
 ```
 This will:
 
-- Train EfficientNet-B2 with Focal Loss
+- Train EfficientNet-B4 with Focal Loss
 
-- Save best and last models'weights at ```outputs/model/efficientnet_b2_best.safetensors``` and ```outputs/model/efficientnet_b2_last_epoch.safetensors```
+- Save best and last models'weights at ```outputs/model/efficientnet_b4_best.safetensors``` and ```outputs/model/efficientnet_b4_last_epoch.safetensors```
 
 - Save history (Training and Validation Loss and Accuracies) at ```outputs/history/training_history.csv```
 
@@ -126,7 +126,7 @@ Two inference modes are provided:
 
 ```bash
 python -m scripts.run_inference \
-    --model_path outputs//models/efficientnet_b2_best.safetensors \
+    --model_path outputs//models/efficientnet_b4_best.safetensors \
     --config configs/default.yaml \
     --mode normal \
     --test_dir data/testPublic \
@@ -138,7 +138,7 @@ Output: ```predictions.csv```
 
 ```bash
 python -m scripts.run_inference \
-    --model_path outputs//models/efficientnet_b2_best.safetensors \
+    --model_path outputs//models/efficientnet_b4_best.safetensors \
     --config configs/default.yaml \
     --mode normal \
     --test_dir data/testPublic \
